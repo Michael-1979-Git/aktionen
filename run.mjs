@@ -1,4 +1,4 @@
-// Holt alle Händler und schreibt docs/data/aktionen.json.
+// Holt alle Händler und schreibt aktionen.json.
 // Schlägt ein Händler fehl, bleiben seine Daten vom letzten erfolgreichen Lauf erhalten.
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
@@ -6,7 +6,7 @@ import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchDenner } from './denner.mjs';
 
-const OUT = fileURLToPath(new URL('../docs/data/aktionen.json', import.meta.url));
+const OUT = fileURLToPath(new URL('./aktionen.json', import.meta.url));
 
 // Hier kommen später Migros und Coop dazu.
 const SHOPS = {
