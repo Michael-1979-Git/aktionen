@@ -1,0 +1,12 @@
+{
+  "name": "aktionen-app",
+  "private": true,
+  "type": "module",
+  "description": "Aktionen von Denner (später Migros und Coop) als installierbare Web-App",
+  "scripts": {
+    "abholen": "node scraper/run.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

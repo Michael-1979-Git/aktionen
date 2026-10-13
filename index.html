@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de-CH">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Aktionen</title>
+  <meta name="theme-color" content="#1f2a24">
+  <meta name="description" content="Aktuelle Aktionen von Denner, Migros und Coop auf einen Blick.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="top">
+    <div class="top__row">
+      <h1>Aktionen</h1>
+      <span id="updated" class="muted small"></span>
+    </div>
+
+    <div class="seg" role="tablist" aria-label="Woche">
+      <button role="tab" data-week="current" aria-selected="true">Diese Woche</button>
+      <button role="tab" data-week="next" aria-selected="false">Nächste Woche</button>
+      <button role="tab" data-week="saved" aria-selected="false">Merkliste <span id="savedCount"></span></button>
+    </div>
+
+    <div class="search">
+      <input id="q" type="search" placeholder="Suchen, z. B. Kaffee, Butter …" autocomplete="off" enterkeyhint="search">
+    </div>
+
+    <div class="filters">
+      <div id="shops" class="chips" aria-label="Händler"></div>
+      <div class="filters__row">
+        <select id="cat" aria-label="Kategorie"><option value="">Alle Kategorien</option></select>
+        <select id="sort" aria-label="Sortierung">
+          <option value="discount">Grösster Rabatt</option>
+          <option value="name">Name A–Z</option>
+          <option value="price">Preis aufsteigend</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div id="notice" class="notice" hidden></div>
+
+  <main>
+    <div class="listhead">
+      <span id="count" class="muted small"></span>
+      <button id="share" class="linkbtn" hidden>Merkliste teilen</button>
+    </div>
+    <ul id="list" class="grid"></ul>
+    <p id="empty" class="empty" hidden></p>
+  </main>
+
+  <footer class="foot muted small">
+    Daten von den Websites der Händler, täglich abgeholt. Angaben ohne Gewähr – massgebend ist der Preis im Laden.
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
