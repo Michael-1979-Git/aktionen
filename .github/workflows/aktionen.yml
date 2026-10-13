@@ -1,0 +1,50 @@
+name: Aktionen abholen
+
+on:
+  schedule:
+    # Zweimal täglich (Zeiten in UTC): ca. 05:47 und 18:47 Schweizer Zeit
+    - cron: '47 3 * * *'
+    - cron: '47 16 * * *'
+  workflow_dispatch: # erlaubt manuellen Start über "Run workflow"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: aktionen
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Aktionen abholen
+        id: scrape
+        run: node run.mjs
+        continue-on-error: true
+
+      - name: Daten speichern
+        run: |
+          git config user.name "aktionen-bot"
+          git config user.email "aktionen-bot@users.noreply.github.com"
+          git add aktionen.json
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen."
+          else
+            git commit -m "Aktionen aktualisiert"
+            git push
+          fi
+
+      # Lauf als fehlgeschlagen markieren, damit GitHub eine Mail schickt
+      - name: Fehler melden
+        if: steps.scrape.outcome == 'failure'
+        run: |
+          echo "::error::Mindestens ein Händler konnte nicht abgeholt werden. Die App zeigt seine Daten vom letzten erfolgreichen Lauf."
+          exit 1
