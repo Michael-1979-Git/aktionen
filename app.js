@@ -45,7 +45,7 @@ function validLabel(it) {
 // ---------- Daten laden ----------
 async function load() {
   try {
-    const res = await fetch('data/aktionen.json', { cache: 'no-cache' });
+    const res = await fetch('aktionen.json', { cache: 'no-cache' });
     if (!res.ok) throw new Error(res.status);
     state.data = await res.json();
   } catch (e) {
