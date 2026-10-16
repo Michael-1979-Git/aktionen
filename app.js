@@ -62,7 +62,13 @@ async function load() {
 
   const failed = Object.entries(state.data.sources || {}).filter(([, s]) => s && s.ok === false);
   if (failed.length) {
-    showNotice(failed.map(([shop, s]) => `${SHOPS[shop]?.label || shop}: Aktualisierung fehlgeschlagen${s.updated ? `, Daten vom ${fmtDate(s.updated)}` : ''}.`).join(' '));
+    showNotice(failed.map(([shop, s]) => {
+      const label = SHOPS[shop]?.label || shop;
+      const has = state.data.items.some((i) => i.shop === shop);
+      return has
+        ? `${label}: letzte Aktualisierung fehlgeschlagen, angezeigt wird der Stand vom ${fmtDate(s.updated)}.`
+        : `${label}: zurzeit keine Daten (Abruf blockiert oder gestört).`;
+    }).join(' '));
   }
 
   const next = state.data.items.filter((i) => i.week === 'next' && i.from).map((i) => i.from).sort()[0];
@@ -80,7 +86,11 @@ function showNotice(text) { const n = $('#notice'); n.textContent = text; n.hidd
 function renderShops(present) {
   const el = $('#shops');
   el.innerHTML = Object.entries(SHOPS).map(([id, s]) => {
-    if (!present.has(id)) return `<span class="chip soon" title="Noch nicht angebunden"><span class="dot" style="background:${s.color}"></span>${s.label} · bald</span>`;
+    if (!present.has(id)) {
+      const src = state.data.sources?.[id];
+      const why = src ? 'gestört' : 'bald';
+      return `<span class="chip soon" title="${src ? 'Zurzeit keine Daten' : 'Noch nicht angebunden'}"><span class="dot" style="background:${s.color}"></span>${s.label} · ${why}</span>`;
+    }
     return `<button class="chip" data-shop="${id}" aria-pressed="${state.shops.has(id)}"><span class="dot" style="background:${s.color}"></span>${s.label}</button>`;
   }).join('');
   el.onclick = (e) => {
@@ -154,11 +164,35 @@ function card(it) {
   </li>`;
 }
 
+// Schrittweise anzeigen: erst 60 Karten, beim Scrollen jeweils 60 weitere
+const STEP = 60;
 let lookup = new Map();
+let shownItems = [];
+let shown = 0;
+const sentinel = document.createElement('li');
+sentinel.setAttribute('aria-hidden', 'true');
+sentinel.style.cssText = 'list-style:none;height:1px';
+const io = 'IntersectionObserver' in window
+  ? new IntersectionObserver((e) => { if (e.some((x) => x.isIntersecting)) more(); }, { rootMargin: '800px' })
+  : null;
+
+function more() {
+  if (shown >= shownItems.length) return;
+  const next = shownItems.slice(shown, shown + STEP);
+  shown += next.length;
+  sentinel.remove();
+  $('#list').insertAdjacentHTML('beforeend', next.map(card).join(''));
+  if (shown < shownItems.length) $('#list').appendChild(sentinel);
+}
+
 function render() {
   const items = currentItems();
   lookup = new Map(items.map((i) => [key(i), i]));
-  $('#list').innerHTML = items.map(card).join('');
+  shownItems = items;
+  shown = 0;
+  $('#list').innerHTML = '';
+  more();
+  if (io) { io.disconnect(); io.observe(sentinel); } else { while (shown < shownItems.length) more(); }
   $('#count').textContent = `${items.length} ${items.length === 1 ? 'Aktion' : 'Aktionen'}`;
   const nSaved = Object.keys(state.saved).length;
   $('#savedCount').textContent = nSaved ? `(${nSaved})` : '';
