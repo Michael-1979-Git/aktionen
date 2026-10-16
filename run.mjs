@@ -4,13 +4,15 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { fetchDenner } from './denner.mjs';
-import { fetchCoop } from './coop.mjs';
+// Coop ist abgeschaltet: coop.ch sperrt Abrufe von GitHub-Servern (Bot-Schutz, HTTP 403).
+// Der Abholer bleibt in coop.mjs erhalten, wird aber bewusst nicht verwendet.
+// import { fetchCoop } from './coop.mjs';
 
 const OUT = fileURLToPath(new URL('./aktionen.json', import.meta.url));
 
 const SHOPS = {
   denner: fetchDenner,
-  coop: fetchCoop,
+  // coop: fetchCoop,
 };
 
 const MIN_ITEMS = 20;               // weniger gilt als Fehler (z. B. Seite umgebaut)
