@@ -5,6 +5,11 @@ const SHOPS = {
   coop: { label: 'Coop', color: 'var(--coop)' },
   denner: { label: 'Denner', color: 'var(--denner)' },
 };
+// Händler ohne eigene Daten: Knopf öffnet die Aktionsseite des Händlers
+// (auf Android öffnet sich die Händler-App, falls installiert)
+const EXTERNAL = {
+  coop: 'https://www.coop.ch/de/aktionen/aktuelle-aktionen/c/m_1011',
+};
 const SAVED_KEY = 'aktionen.merkliste.v1';
 const UI_KEY = 'aktionen.ui.v1';
 
@@ -86,6 +91,9 @@ function showNotice(text) { const n = $('#notice'); n.textContent = text; n.hidd
 function renderShops(present) {
   const el = $('#shops');
   el.innerHTML = Object.entries(SHOPS).map(([id, s]) => {
+    if (!present.has(id) && EXTERNAL[id]) {
+      return `<a class="chip" href="${EXTERNAL[id]}" target="_blank" rel="noopener" title="Aktionen auf der ${s.label}-Website öffnen"><span class="dot" style="background:${s.color}"></span>${s.label} ↗</a>`;
+    }
     if (!present.has(id)) {
       const src = state.data.sources?.[id];
       const why = src ? 'gestört' : 'bald';
