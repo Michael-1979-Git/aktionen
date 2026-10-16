@@ -78,9 +78,9 @@ async function load() {
 
   // Häufigstes Startdatum der Vorschau (einzelne lang laufende Aktionen sollen das Datum nicht verfälschen)
   const starts = {};
-  for (const i of state.data.items) if (i.week === 'next' && i.from) { const d = new Date(i.from).toDateString(); starts[d] = (starts[d] || 0) + 1; }
+  for (const i of state.data.items) if (i.week === 'next' && i.from && new Date(i.from) > new Date()) { const d = new Date(i.from).toDateString(); starts[d] = (starts[d] || 0) + 1; }
   const next = Object.entries(starts).sort((x, y) => y[1] - x[1] || new Date(y[0]) - new Date(x[0]))[0]?.[0];
-  if (next) document.querySelector('[data-week="next"]').textContent = `Ab ${fmtDate(next)}`;
+  document.querySelector('[data-week="next"]').textContent = next ? `Ab ${fmtDate(next)}` : 'Nächste Woche';
 
   renderShops(present);
   renderCats();
