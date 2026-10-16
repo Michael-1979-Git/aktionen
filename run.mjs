@@ -7,11 +7,13 @@ import { fetchDenner } from './denner.mjs';
 // Coop ist abgeschaltet: coop.ch sperrt Abrufe von GitHub-Servern (Bot-Schutz, HTTP 403).
 // Der Abholer bleibt in coop.mjs erhalten, wird aber bewusst nicht verwendet.
 // import { fetchCoop } from './coop.mjs';
+import { fetchMigros } from './migros.mjs';
 
 const OUT = fileURLToPath(new URL('./aktionen.json', import.meta.url));
 
 const SHOPS = {
   denner: fetchDenner,
+  migros: fetchMigros,
   // coop: fetchCoop,
 };
 
