@@ -1,19 +1,21 @@
 // Holt alle Händler und schreibt aktionen.json.
-// Schlägt ein Händler fehl, bleiben seine Daten vom letzten erfolgreichen Lauf erhalten.
+// Schlägt ein Händler fehl, bleiben seine letzten Daten bis zu 3 Tage erhalten.
 
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { fetchDenner } from './denner.mjs';
+import { fetchCoop } from './coop.mjs';
 
 const OUT = fileURLToPath(new URL('./aktionen.json', import.meta.url));
 
-// Hier kommen später Migros und Coop dazu.
 const SHOPS = {
   denner: fetchDenner,
+  coop: fetchCoop,
 };
 
-const MIN_ITEMS = 20; // weniger gilt als Fehler (z. B. Seite umgebaut)
+const MIN_ITEMS = 20;               // weniger gilt als Fehler (z. B. Seite umgebaut)
+const KEEP_OLD_MS = 3 * 86400e3;    // alte Daten höchstens 3 Tage weiterzeigen
+const ALERT_AFTER_MS = 24 * 3600e3; // erst nach 1 Tag ohne Erfolg eine Fehler-Mail
 
 async function loadPrevious() {
   try {
@@ -23,10 +25,11 @@ async function loadPrevious() {
   }
 }
 
+const now = Date.now();
 const previous = await loadPrevious();
 const items = [];
 const sources = {};
-let failures = 0;
+let alert = false;
 
 for (const [shop, fetcher] of Object.entries(SHOPS)) {
   try {
@@ -36,21 +39,18 @@ for (const [shop, fetcher] of Object.entries(SHOPS)) {
     sources[shop] = { ok: true, count: got.length, updated: new Date().toISOString() };
     console.log(`${shop}: ${got.length} Aktionen`);
   } catch (err) {
-    failures++;
-    const old = previous.items.filter((i) => i.shop === shop);
+    const prev = previous.sources?.[shop] || {};
+    const lastOk = prev.updated ? Date.parse(prev.updated) : 0;
+    const old = now - lastOk < KEEP_OLD_MS ? previous.items.filter((i) => i.shop === shop) : [];
     items.push(...old);
-    sources[shop] = {
-      ...(previous.sources?.[shop] || {}),
-      ok: false,
-      error: String(err.message || err),
-    };
-    console.error(`${shop}: FEHLER – ${err.message}. Behalte ${old.length} alte Einträge.`);
+    sources[shop] = { ...prev, ok: false, error: String(err.message || err), failedAt: new Date().toISOString() };
+    if (now - lastOk > ALERT_AFTER_MS) alert = true;
+    console.error(`${shop}: FEHLER – ${err.message}. Zeige ${old.length} Einträge vom letzten Erfolg.`);
   }
 }
 
-await mkdir(dirname(OUT), { recursive: true });
 await writeFile(OUT, JSON.stringify({ updated: new Date().toISOString(), sources, items }));
 console.log(`Geschrieben: ${items.length} Aktionen`);
 
-// Exit-Code ≠ 0 löst bei GitHub eine Fehler-Mail aus.
-if (failures) process.exit(1);
+// Exit-Code ≠ 0 löst bei GitHub eine Fehler-Mail aus – nur bei länger andauernden Problemen.
+if (alert) process.exit(1);
